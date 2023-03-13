@@ -1,31 +1,25 @@
+/**
+ * @author Aviruk Basak
+ * @date March 14th, 2023
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
 
-#include "matrix.h"
+#include "libmatrix/matrix.h"
 
-/**
- * Throw an exception with value = exception code.
- * @error MatrixError
- */
 void matrix_errndie(MatrixError ex, const char *msg)
 {
 #ifdef DEBUG
     printf("MatrixError: %s\n", msg);
+    ex;
 #endif
     exit(100 + ex);
+    msg;
 }
 
-/**
- * Create a new matrix object.
- * @param rows Row size of DDA
- * @param cols Column size of DDA
- * @param val Default initial value
- * @return Matrix
- * @error MatrixError Matrix can't have 0 rows - ERR_0ROWS
- * @error MatrixError Matrix can't have 0 columns - ERR_0COLS
- */
 Matrix matrix_new(int rows, int cols, double val)
 {
     if (rows < 1)
@@ -45,10 +39,24 @@ Matrix matrix_new(int rows, int cols, double val)
     return m1;
 }
 
-/**
- * Clears the array of the matrix instance on scope exit.
- * @param this A reference to the new matrix
- */
+Matrix matrix_from(int rows, int cols, double dda[rows][cols])
+{
+    Matrix nm = matrix_new(rows, cols, 0);
+    for (int i = 0; i < rows; i++)
+        for (int j = 0; j < cols; j++)
+            nm.m[i][j] = dda[i][j];
+    return nm;
+}
+
+Matrix matrix_clone(const Matrix m1)
+{
+    Matrix nm = matrix_new(m1.rows, m1.cols, 0);
+    for (int i = 0; i < m1.rows; i++)
+        for (int j = 0; j < m1.cols; j++)
+            nm.m[i][j] = m1.m[i][j];
+    return nm;
+}
+
 void matrix_free(Matrix *this)
 {
     for (int i = 0; i < this->rows; i++)
@@ -58,16 +66,7 @@ void matrix_free(Matrix *this)
     this->m = NULL;
 }
 
-/**
- * Get an element of the matrix from an index.
- * @param m1 The current matrix
- * @param i Row wise position of element
- * @param j Column wise position of element
- * @return double The value at index i, j
- * @error MatrixError Row index out of bounds - ERR_ROUTB
- * @error MatrixError Column index out of bounds - ERR_COUTB
- */
-double matrix_get(Matrix m1, int i, int j)
+double matrix_get(const Matrix m1, int i, int j)
 {
     if (i < 0 || i > m1.rows)
         matrix_errndie(ERR_ROUTB, "row index out of bounds");
@@ -76,16 +75,7 @@ double matrix_get(Matrix m1, int i, int j)
     return m1.m[i][j];
 }
 
-/**
- * Set an element of the matrix to an index.
- * @param m1 The current matrix
- * @param i Row wise position of element
- * @param j Column wise position of element
- * @param val Value to be set
- * @error MatrixError Row index out of bounds - ERR_ROUTB
- * @error MatrixError Column index out of bounds - ERR_COUTB
- */
-void matrix_set(Matrix m1, int i, int j, double val)
+void matrix_set(const Matrix m1, int i, int j, double val)
 {
     if (i < 0 || i > m1.rows)
         matrix_errndie(ERR_ROUTB, "row index out of bounds");
@@ -100,7 +90,7 @@ void matrix_set(Matrix m1, int i, int j, double val)
  * @param m2 The matrix to compare to
  * @return boolean True if equal
  */
-bool matrix_equals(Matrix m1, Matrix m2)
+bool matrix_equals(const Matrix m1, const Matrix m2)
 {
     if (m1.rows != m2.rows || m1.cols != m2.cols)
         return false;
@@ -111,13 +101,6 @@ bool matrix_equals(Matrix m1, Matrix m2)
     return true;
 }
 
-/**
- * Add or subtract two compatible matrices.
- * @param m1 The current matrix
- * @param m2 The matrix to add
- * @return Matrix The matrix of sums/diff
- * @error MatrixError If matrices aren't compatible - ERR_INCMP
- */
 Matrix matrix_addorsub(Matrix m1, Matrix m2, bool sub)
 {
     if (m2.rows != m1.rows || m2.cols != m1.cols)
@@ -128,30 +111,18 @@ Matrix matrix_addorsub(Matrix m1, Matrix m2, bool sub)
             double rslt = m1.m[i][j] + (sub ? (-1) * m2.m[i][j] : m2.m[i][j]);
             nm.m[i][j] = rslt;
         }
+    matrix_free(&m1);
+    matrix_free(&m2);
     return nm;
 }
 
-/**
- * Add two compatible matrices.
- * @param m1 The current matrix
- * @param m2 The matrix to add
- * @return Matrix The matrix of sums
- * @error MatrixError If matrices aren't compatible - ERR_INCMP
- */
-Matrix matrix_add(Matrix m1, Matrix m2, bool sub)
+Matrix matrix_add(Matrix m1, Matrix m2)
 {
     if (m2.rows != m1.rows || m2.cols != m1.cols)
         matrix_errndie(ERR_INCMP, "incompatible matrices for addition");
     return matrix_addorsub(m1, m2, false);
 }
 
-/**
- * Subtract 2nd from 1st matrix.
- * @param m1 The current matrix
- * @param m2 The matrix to subtract
- * @return Matrix The matrix of differences
- * @error MatrixError If matrices aren't compatible - ERR_INCMP
- */
 Matrix matrix_subtract(Matrix m1, Matrix m2)
 {
     if (m2.rows != m1.rows || m2.cols != m1.cols)
@@ -159,12 +130,6 @@ Matrix matrix_subtract(Matrix m1, Matrix m2)
     return matrix_addorsub(m1, m2, true);
 }
 
-/**
- * Multiply a matrix by a scalar.
- * @param m1 The current matrix
- * @param scalar Scalar to multiply by
- * @return matrix The matrix of products
- */
 Matrix matrix_scale(Matrix m1, double scalar)
 {
     Matrix nm = matrix_new(m1.rows, m1.cols, 0);
@@ -173,16 +138,10 @@ Matrix matrix_scale(Matrix m1, double scalar)
             double rslt = scalar * m1.m[i][j];
             nm.m[i][j] = rslt;
         }
+    matrix_free(&m1);
     return nm;
 }
 
-/**
- * Multiply two compatible matrices.
- * @param m1 The current matrix
- * @param m2 The matrix to multiply by
- * @return Matrix The matrix after multiplication
- * @error MatrixError If matrices aren't compatible - ERR_INCMP
- */
 Matrix matrix_multiply(Matrix m1, Matrix m2)
 {
     if (m1.cols != m2.rows)
@@ -199,39 +158,21 @@ Matrix matrix_multiply(Matrix m1, Matrix m2)
                 sum += m1.m[i][k] * m2.m[k][j];
             nm.m[i][j] = sum;
         }
+    matrix_free(&m1);
+    matrix_free(&m2);
     return nm;
 }
 
-/**
- * Calculate matrix to the power of +ve integer.
- * @param m1 The current matrix
- * @param index Power of matrix
- * @return Matrix The resulting matrix
- * @error MatrixError Same as MatrixErrors of matrix::multiply method
- */
 Matrix matrix_power(Matrix m1, int index)
 {
-    Matrix nm = m1;
-    for (int i = 0; i < index - 1; i++) {
-        Matrix tmp = matrix_multiply(nm, m1);
-        // free all temp matrices, but not this
-        if (nm.m != m1.m) matrix_free(&nm);
-        nm = tmp;
-    }
+    Matrix nm = matrix_clone(m1);
+    for (int i = 0; i < index - 1; i++)
+        nm = matrix_multiply(nm, matrix_clone(m1));
+    matrix_free(&m1);
     return nm;
 }
 
-/**
- * Excludes a row and a column and generates a sub matrix.
- * Useful for calculating determinants and cofactor matrices.
- * @param m1 The current matrix
- * @param row The row to exclude
- * @param col The column to exclude
- * @return Matrix The sub matrix
- * @error MatrixError Row index out of bounds - ERR_ROUTB
- * @error MatrixError Column index out of bounds - ERR_COUTB
- */
-Matrix matrix_mksubmatrix(Matrix m1, int row, int col)
+Matrix matrix_mksubmatrix(const Matrix m1, int row, int col)
 {
     if (row < 0 || row > m1.rows)
         matrix_errndie(ERR_ROUTB, "row index out of bounds");
@@ -258,13 +199,7 @@ Matrix matrix_mksubmatrix(Matrix m1, int row, int col)
     return subm;
 }
 
-/**
- * Calculate determinant of this matrix.
- * @param m1 The current matrix
- * @return double The determinant
- * @throw MatrixError If matrix isn't a square matrix - ERR_NOSQR
- */
-double matrix_determinant(Matrix m1)
+double matrix_determinant(const Matrix m1)
 {
     if (m1.rows != m1.cols)
         matrix_errndie(ERR_NOSQR, "not a square matrix");
@@ -286,26 +221,16 @@ double matrix_determinant(Matrix m1)
     return det;
 }
 
-/**
- * Calculate the transpose of this matrix.
- * @param m1 The current matrix
- * @return Matrix The transpose
- */
 Matrix matrix_transpose(Matrix m1)
 {
     Matrix nm = matrix_new(m1.cols, m1.rows, 0);
     for (int i = 0; i < m1.rows; i++)
         for (int j = 0; j < m1.cols; j++)
             nm.m[j][i] = m1.m[i][j];
+    matrix_free(&m1);
     return nm;
 }
 
-/**
- * Calculate the cofactor matrix of this matrix.
- * @param m1 The current matrix
- * @return Matrix The cofactor matrix
- * @error MatrixError If matrix isn't a square matrix - ERR_NOSQR
- */
 Matrix matrix_cofactor(Matrix m1)
 {
     if (m1.rows != m1.cols)
@@ -318,32 +243,17 @@ Matrix matrix_cofactor(Matrix m1)
             nm.m[i][j] = coeff * matrix_determinant(subm);
             matrix_free(&subm);
         }
+    matrix_free(&m1);
     return nm;
 }
 
-/**
- * Calculate the adjoint of this matrix.
- * @param m1 The current matrix
- * @return Matrix The adjoint
- * @error MatrixError If matrix isn't a square matrix - ERR_NOSQR
- */
 Matrix matrix_adjoint(Matrix m1)
 {
     if (m1.rows != m1.cols)
         matrix_errndie(ERR_NOSQR, "not a square matrix");
-    Matrix cof = matrix_cofactor(m1);
-    Matrix adj = matrix_transpose(cof);
-    matrix_free(&cof);
-    return adj;
+    return matrix_transpose(matrix_cofactor(m1));
 }
 
-/**
- * Calculate the inverse of this matrix.
- * @param m1 The current matrix
- * @return Matrix The inverse
- * @error MatrixError If matrix isn't a square matrix - ERR_NOSQR
- * @error MatrixError If determinant is 0 - ERR_DETR0
- */
 Matrix matrix_inverse(Matrix m1)
 {
     if (m1.rows != m1.cols)
@@ -351,17 +261,10 @@ Matrix matrix_inverse(Matrix m1)
     double determinant = matrix_determinant(m1);
     if (determinant == 0)
         matrix_errndie(ERR_DETR0, "determinant is 0");
-    Matrix adj = matrix_adjoint(m1);
-    Matrix inv = matrix_scale(adj, 1/determinant);
-    matrix_free(&adj);
-    return inv;
+    return matrix_scale(matrix_adjoint(m1), 1/determinant);
 }
 
-/**
- * Display the matrix.
- * @param m1 The current matrix
- */
-void matrix_print(Matrix m1)
+void matrix_print(const Matrix m1)
 {
     for (int i = 0; i < m1.rows; i++) {
         for (int j = 0; j < m1.cols; j++)
@@ -370,14 +273,6 @@ void matrix_print(Matrix m1)
     }
 }
 
-/**
- * Create a null matrix of given size.
- * @param rows Rows of matrix
- * @param cols Cols of matrix
- * @return Matrix A null matrix
- * @error MatrixError Row index out of bounds - ERR_ROUTB
- * @error MatrixError Column index out of bounds - ERR_COUTB
- */
 Matrix matrix_mknull(int rows, int cols)
 {
     if (cols == 0) cols = rows;
@@ -385,13 +280,6 @@ Matrix matrix_mknull(int rows, int cols)
     return nm;
 }
 
-/**
- * Create a unit matrix of given size.
- * @param n Size of matrix
- * @return Matrix A unit matrix
- * @error MatrixError Row index out of bounds - ERR_ROUTB
- * @error MatrixError Column index out of bounds - ERR_COUTB
- */
 Matrix matrix_mkunit(int n)
 {
     Matrix nm = matrix_new(n, n, 0);

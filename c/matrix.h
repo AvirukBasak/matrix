@@ -1,3 +1,8 @@
+/**
+ * @author Aviruk Basak
+ * @date March 14th, 2023
+ */
+
 #ifndef MATRIX_H
 #define MATRIX_H
 
@@ -51,6 +56,26 @@ typedef struct {
 Matrix matrix_new(int rows, int cols, double val);
 
 /**
+ * Create a new matrix object.
+ * @param rows Row size of DDA
+ * @param cols Column size of DDA
+ * @param dda Default initial value DDA
+ * @return Matrix
+ * @error MatrixError Matrix can't have 0 rows - ERR_0ROWS
+ * @error MatrixError Matrix can't have 0 columns - ERR_0COLS
+ */
+Matrix matrix_from(int rows, int cols, double dda[rows][cols]);
+
+/**
+ * Clone a matrix.
+ * @param m1 The matrix to be cloned
+ * @return Matrix
+ * @error MatrixError Matrix can't have 0 rows - ERR_0ROWS
+ * @error MatrixError Matrix can't have 0 columns - ERR_0COLS
+ */
+Matrix matrix_clone(const Matrix m1);
+
+/**
  * Clears the array of the matrix instance on scope exit.
  * @param this A reference to the new matrix
  */
@@ -65,7 +90,7 @@ void matrix_free(Matrix *this);
  * @error MatrixError Row index out of bounds - ERR_ROUTB
  * @error MatrixError Column index out of bounds - ERR_COUTB
  */
-double matrix_get(Matrix m1, int i, int j);
+double matrix_get(const Matrix m1, int i, int j);
 
 /**
  * Set an element of the matrix to an index.
@@ -76,7 +101,7 @@ double matrix_get(Matrix m1, int i, int j);
  * @error MatrixError Row index out of bounds - ERR_ROUTB
  * @error MatrixError Column index out of bounds - ERR_COUTB
  */
-void matrix_set(Matrix m1, int i, int j, double val);
+void matrix_set(const Matrix m1, int i, int j, double val);
 
 /*
  * Compares two matrices for equality.
@@ -84,12 +109,12 @@ void matrix_set(Matrix m1, int i, int j, double val);
  * @param m2 The matrix to compare to
  * @return boolean True if equal
  */
-bool matrix_equals(Matrix m1, Matrix m2);
+bool matrix_equals(const Matrix m1, const Matrix m2);
 
 /**
  * Add or subtract two compatible matrices.
  * @param m1 The current matrix
- * @param m2 The matrix to add
+ * @param m2 Pointer to the matrix to add
  * @return Matrix The matrix of sums/diff
  * @error MatrixError If matrices aren't compatible - ERR_INCMP
  */
@@ -98,16 +123,16 @@ Matrix matrix_addorsub(Matrix m1, Matrix m2, bool sub);
 /**
  * Add two compatible matrices.
  * @param m1 The current matrix
- * @param m2 The matrix to add
+ * @param m2 Pointer to the matrix to add
  * @return Matrix The matrix of sums
  * @error MatrixError If matrices aren't compatible - ERR_INCMP
  */
-Matrix matrix_add(Matrix m1, Matrix m2, bool sub);
+Matrix matrix_add(Matrix m1, Matrix m2);
 
 /**
  * Subtract 2nd from 1st matrix.
  * @param m1 The current matrix
- * @param m2 The matrix to subtract
+ * @param m2 Pointer to the matrix to subtract
  * @return Matrix The matrix of differences
  * @error MatrixError If matrices aren't compatible - ERR_INCMP
  */
@@ -124,7 +149,7 @@ Matrix matrix_scale(Matrix m1, double scalar);
 /**
  * Multiply two compatible matrices.
  * @param m1 The current matrix
- * @param m2 The matrix to multiply by
+ * @param m2 Pointer to the matrix to multiply by
  * @return Matrix The matrix after multiplication
  * @error MatrixError If matrices aren't compatible - ERR_INCMP
  */
@@ -149,7 +174,7 @@ Matrix matrix_power(Matrix m1, int index);
  * @error MatrixError Row index out of bounds - ERR_ROUTB
  * @error MatrixError Column index out of bounds - ERR_COUTB
  */
-Matrix matrix_mksubmatrix(Matrix m1, int row, int col);
+Matrix matrix_mksubmatrix(const Matrix m1, int row, int col);
 
 /**
  * Calculate determinant of this matrix.
@@ -157,7 +182,7 @@ Matrix matrix_mksubmatrix(Matrix m1, int row, int col);
  * @return double The determinant
  * @throw MatrixError If matrix isn't a square matrix - ERR_NOSQR
  */
-double matrix_determinant(Matrix m1);
+double matrix_determinant(const Matrix m1);
 
 /**
  * Calculate the transpose of this matrix.
@@ -195,7 +220,7 @@ Matrix matrix_inverse(Matrix m1);
  * Display the matrix.
  * @param m1 The current matrix
  */
-void matrix_print(Matrix m1);
+void matrix_print(const Matrix m1);
 
 /**
  * Create a null matrix of given size.

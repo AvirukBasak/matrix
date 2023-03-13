@@ -1,6 +1,6 @@
 class Matrix:
 
-    FLOAT_PRECISION = "%.2f"
+    FLOAT_PRECISION = "%.3f"
 
     E_0ROWS = "E_0ROWS"    # matrix can't have 0 rows
     E_0COLS = "E_0COLS"    # matrix can't have 0 columns
@@ -438,12 +438,13 @@ class Matrix:
         return self ** -1
 
     def __str__(self):
-        str = ''
+        str = "["
         for i in range(self.rows):
+            str += "["
             for j in range(self.cols):
-                str += ( self.FLOAT_PRECISION % self[i][j] ) + " \t"
-            str += "\n"
-        return str
+                str += ( self.FLOAT_PRECISION % self[i][j] ) + ("," if j < self.cols -1 else "")
+            str += "]%s" % (",\n" if i < self.rows -1 else "")
+        return str + ']'
 
     def print(self, message=None):
         '''
@@ -451,7 +452,7 @@ class Matrix:
         '''
         if message != None:
             print(message)
-        print(String(self))
+        print(str(self))
 
     def test():
         '''
